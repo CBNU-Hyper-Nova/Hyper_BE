@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
                         // ! 추후 "/api/signal/**" 삭제 필요
-                        .requestMatchers("/api/user/signup", "/api/user/login", "/api/signal/**").permitAll() // 특정 경로는 인증 없이 허용
+                        .requestMatchers("/api/user/signup", "/api/user/login", "/api/signal/**", "/api/call/**").permitAll() // 특정 경로는 인증 없이 허용
                         .anyRequest().authenticated() // 그 외의 요청은 인증 필요
                 );
         return http.build();
