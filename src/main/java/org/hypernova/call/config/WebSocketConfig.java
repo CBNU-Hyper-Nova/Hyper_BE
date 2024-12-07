@@ -21,6 +21,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 클라이언트는 ws://[서버 주소]/ws에 연결하여 WebSocket 세션을 시작
         // 모든 출처(origin)에서의 접근을 허용하여 CORS 문제를 방지
-        registry.addEndpoint("/ws").setAllowedOrigins("*").withSockJS(); // 클라이언트가 WebSocket에 연결을 시작하는 엔드포인트
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins("http://localhost:5173")
+                .withSockJS();
     }
 }
