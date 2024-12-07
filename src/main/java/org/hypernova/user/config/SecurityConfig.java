@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/Users/eunii/Documents/CODE/HyperNova/src/main/resources/static/index.html", "/static/**", "/ws/**", "/api/user/signup", "/api/user/login", "/signal/**", "/call/**").permitAll()
+                        .requestMatchers("/ws/**", "/user/signup", "/user/login", "/signal/**", "/call/**").permitAll()
                         .anyRequest().authenticated() // 나머지 요청 인증 필요
                 )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // frameOptions 비활성화
