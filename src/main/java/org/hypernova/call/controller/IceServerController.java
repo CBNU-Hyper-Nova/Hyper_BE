@@ -1,5 +1,7 @@
 package org.hypernova.call.controller;
 
+import lombok.RequiredArgsConstructor;
+import org.hypernova.call.service.WebRtcConfigService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,23 +15,19 @@ import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/call")
+@RequestMapping("/call")
+@RequiredArgsConstructor
 public class IceServerController {
+
+    private final WebRtcConfigService webRtcConfigService;
 
     @GetMapping("/ice-servers")
     public ResponseEntity<List<Map<String, String>>> getIceServers() {
-        List<Map<String, String>> iceServers = new ArrayList<>();
-
-        Map<String, String> stunServer = new HashMap<>();
-        stunServer.put("urls", "stun:stun.l.google.com:19302");
-        iceServers.add(stunServer);
-
-        Map<String, String> turnServer = new HashMap<>();
-        turnServer.put("urls", "turn:localhost:3478");
-        turnServer.put("username", "hypernova");
-        turnServer.put("credential", "nova2777*");
-        iceServers.add(turnServer);
-
-        return ResponseEntity.ok(iceServers);
+        return ResponseEntity.ok(
+                List.of(
+                        webRtcConfigService.getStunServerConfig(),
+                        webRtcConfigService.getTurnServerConfig()
+                )
+        );
     }
 }
