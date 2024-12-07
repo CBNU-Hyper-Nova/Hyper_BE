@@ -58,4 +58,16 @@ public class SignalService {
         // 세션 종료
         sessionService.endSession(user);
     }
+
+    public void sendOffer(String caller, String receiver, String offer) {
+        messagingTemplate.convertAndSend(String.format("/queue/%s/offer", receiver), offer);
+    }
+
+    public void sendAnswer(String caller, String receiver, String answer) {
+        messagingTemplate.convertAndSend(String.format("/queue/%s/answer", receiver), answer);
+    }
+
+    public void sendIceCandidate(String sender, String receiver, String candidate) {
+        messagingTemplate.convertAndSend(String.format("/queue/%s/candidate", receiver), candidate);
+    }
 }
