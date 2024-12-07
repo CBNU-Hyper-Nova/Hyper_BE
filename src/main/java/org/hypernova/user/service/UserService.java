@@ -1,6 +1,7 @@
 package org.hypernova.user.service;
 
 import org.hypernova.user.dto.UserRequestDto;
+import org.hypernova.user.dto.UserResponseDto;
 import org.hypernova.user.entity.User;
 import org.hypernova.user.jwt.util.JwtUtil;
 import org.hypernova.user.repository.UserRepository;
@@ -23,10 +24,10 @@ public class UserService {
      *                   - password: 사용자 비밀번호
      * @return 사용자 등록 성공 메시지
      */
-    public String signup(UserRequestDto requestDto) {
+    public UserResponseDto signup(UserRequestDto requestDto) {
         // 이미 존재하는 사용자 이름인지 확인
         if (userRepository.existsByUsername(requestDto.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
+            return new UserResponseDto("error", "이미 존재하는 사용자입니다.");
         }
 
         // 비밀번호 암호화
@@ -39,7 +40,7 @@ public class UserService {
                 .build();
         userRepository.save(user);
 
-        return "User registered successfully";
+        return new UserResponseDto("success", "회원가입이 완료되었습니다.");
     }
 
     /**
@@ -49,17 +50,19 @@ public class UserService {
      *                   - password: 사용자 비밀번호
      * @return 로그인 성공 시 JWT 토큰
      */
-    public String login(UserRequestDto requestDto) {
+    public UserResponseDto login(UserRequestDto requestDto) {
         // 해당 이름을 가진 사용자 객체 조회
         User user = userRepository.findByUsername(requestDto.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
 
         // 비밀번호 확인
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid username or password");
+            throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        // JWT 토큰 반환
-        return jwtUtil.generateToken(user.getUsername());
+        // JWT 토큰 생성
+        String token = jwtUtil.generateToken(user.getUsername());
+
+        return new UserResponseDto("success", "로그인에 성공했습니다.", token);
     }
 }
