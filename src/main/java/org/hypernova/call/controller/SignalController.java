@@ -1,67 +1,50 @@
 package org.hypernova.call.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.hypernova.call.service.SignalService;
-import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.hypernova.call.dto.SignalMessage;
 
 @Controller
 @RequiredArgsConstructor
-public class SignalController extends TextWebSocketHandler {
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+public class SignalController {
+    private static final Logger logger = LoggerFactory.getLogger(SignalController.class);
+    private final SimpMessagingTemplate messagingTemplate;
 
-    // WebSocket 연결이 시작될 때 세션을 저장
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String sessionId = session.getId();
-        sessions.put(sessionId, session);
-        System.out.println("New WebSocket session connected: " + sessionId);
-    }
-
-    // 클라이언트로부터 메시지 수신
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        JSONObject jsonMessage = new JSONObject(message.getPayload());
-        String type = jsonMessage.getString("type"); // offer, answer, candidate
-        String targetSessionId = jsonMessage.getString("target"); // 수신 대상 클라이언트 ID
-
-        switch (type) {
-            case "offer":
-            case "answer":
-            case "candidate":
-                forwardMessage(targetSessionId, jsonMessage.toString());
-                break;
-            default:
-                System.out.println("Unknown message type: " + type);
-        }
-    }
-
-    // 수신 대상 클라이언트에게 메시지 전달
-    private void forwardMessage(String targetSessionId, String message) {
-        WebSocketSession targetSession = sessions.get(targetSessionId);
-        if (targetSession != null && targetSession.isOpen()) {
-            try {
-                targetSession.sendMessage(new TextMessage(message));
-            } catch (Exception e) {
-                e.printStackTrace();
+    @MessageMapping("/message")
+    public void handleMessage(SignalMessage message) {
+        try {
+            logger.info("메시지 수신: {}", message);
+            
+            // 메시지 타입에 따른 처리
+            switch (message.getType()) {
+                case "call-request":
+                    logger.info("통화 요청: from={}, to={}", message.getFrom(), message.getTo());
+                    break;
+                case "call-accept":
+                    logger.info("통화 수락: from={}, to={}", message.getFrom(), message.getTo());
+                    break;
+                case "call-reject":
+                    logger.info("통화 거절: from={}, to={}", message.getFrom(), message.getTo());
+                    break;
             }
-        } else {
-            System.out.println("Target session not found or closed: " + targetSessionId);
+            
+            // 수신자의 큐로 메시지 전달
+            String destination = "/user/" + message.getTo() + "/queue/messages";
+            logger.info("메시지 전달 대상: {}", destination);
+            
+            messagingTemplate.convertAndSendToUser(
+                message.getTo(),
+                "/queue/messages",
+                message
+            );
+            
+            logger.info("메시지 전달 완료");
+        } catch (Exception e) {
+            logger.error("메시지 처리 중 오류:", e);
         }
-    }
-
-    // WebSocket 연결 종료 시 세션 제거
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        sessions.remove(session.getId());
-        System.out.println("WebSocket session closed: " + session.getId());
     }
 }

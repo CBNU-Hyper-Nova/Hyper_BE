@@ -8,6 +8,10 @@ import org.hypernova.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.ArrayList;
+import java.util.List;
+import org.hypernova.user.dto.Friend;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +49,7 @@ public class UserService {
 
     /**
      * 사용자 로그인
-     * @param requestDto 로그인에 필요한 사용자 정보
+     * @param requestDto ��그인에 필요한 사용자 정보
      *                   - username: 사용자 고유 이름
      *                   - password: 사용자 비밀번호
      * @return 로그인 성공 시 JWT 토큰
@@ -62,6 +66,14 @@ public class UserService {
 
         // JWT 토큰 생성
         String token = jwtUtil.generateToken(user.getUsername());
+
+        // 로그인한 사용자가 박유경이면 강재구를, 강재구면 박유경을 친구로 반환
+        List<Friend> friends = new ArrayList<>();
+        if ("박유경".equals(user.getUsername())) {
+            friends.add(new Friend(2L, "강재구", "/default-profile.png", "jaegu-signal"));
+        } else if ("강재구".equals(user.getUsername())) {
+            friends.add(new Friend(1L, "박유경", "/default-profile.png", "yugyeong-signal"));
+        }
 
         return new UserResponseDto("success", "로그인에 성공했습니다.", token);
     }
